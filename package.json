@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.15.3",
-		"@zoom/meetingsdk": "^1.0.0",
+		"@zoom/meetingsdk": "^3.13.2",
 		"bcryptjs": "^2.4.3",
 		"cloudinary": "^1.41.3",
 		"compression": "^1.7.4",
@@ -38,8 +38,7 @@
 		"sharp": "^0.29.1",
 		"uuid": "^8.3.2",
 		"validator": "^13.6.0",
-		"winston": "^3.3.3",
-		"zoom-api": "^1.0.0"
+		"winston": "^3.3.3"
 	},
 	"devDependencies": {
 		"@babel/cli": "^7.14.8",
