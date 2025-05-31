@@ -1,0 +1,12 @@
+export { default as User } from './userModel';
+export { default as Role } from './roleModel';
+export { default as Token } from './tokenModel';
+export { default as Permission } from './permissionModel';
+export { default as Template } from './Template';
+export { default as Clause } from './Clause';
+export { default as Contract } from './contract';
+export { default as Conversation } from './conversation.model';
+export { default as Lawyer } from './Lawyer';
+export { default as Consultation } from './Consultation';
+export { default as LegalStamp } from './LegalStamp';
+export { default as ClientPortal } from './clientPortal.model';

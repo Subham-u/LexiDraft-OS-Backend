@@ -28,7 +28,15 @@ const envValidate = Joi.object()
 
 		FRONTEND_URL: Joi.string().allow('').empty('').default('http://localhost:777'),
 		IMAGE_URL: Joi.string().allow('').empty('').default('http://localhost:666/images'),
-		OPENAI_API_KEY: Joi.string().required()
+		OPENAI_API_KEY: Joi.string().required(),
+
+		CLOUDINARY_CLOUD_NAME: Joi.string().allow('').empty(''),
+		CLOUDINARY_API_KEY: Joi.string().allow('').empty(''),
+		CLOUDINARY_API_SECRET: Joi.string().allow('').empty(''),
+
+		AADHAAR_API_KEY: Joi.string().allow('').empty(''),
+		AADHAAR_API_SECRET: Joi.string().allow('').empty(''),
+		AADHAAR_API_URL: Joi.string().allow('').empty('').default('https://esign.aadhaar.gov.in')
 	})
 	.unknown();
 
@@ -78,5 +86,17 @@ export default {
 
 	openai: {
 		apiKey: env.OPENAI_API_KEY
+	},
+
+	cloudinary: {
+		cloudName: env.CLOUDINARY_CLOUD_NAME,
+		apiKey: env.CLOUDINARY_API_KEY,
+		apiSecret: env.CLOUDINARY_API_SECRET
+	},
+
+	aadhaar: {
+		apiKey: env.AADHAAR_API_KEY,
+		apiSecret: env.AADHAAR_API_SECRET,
+		apiUrl: env.AADHAAR_API_URL
 	}
 };

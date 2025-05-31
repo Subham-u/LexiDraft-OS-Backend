@@ -30,11 +30,7 @@ class ContractController {
 
 	async updateContract(req, res) {
 		try {
-			const contract = await contractService.updateContract(
-				req.params.contractId,
-				req.body,
-				req.user.id
-			);
+			const contract = await contractService.updateContract(req.params.contractId, req.body, req.user.id);
 			res.json(contract);
 		} catch (error) {
 			res.status(400).json({ error: error.message });
@@ -81,4 +77,4 @@ class ContractController {
 	}
 }
 
-export default new ContractController(); 
+export default new ContractController();

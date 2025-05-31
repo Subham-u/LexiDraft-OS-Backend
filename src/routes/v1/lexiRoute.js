@@ -10,21 +10,21 @@ const router = Router();
 // Conversation management
 router.post(
 	'/conversations',
-	authenticate('lexi:create'),
+	authenticate(),
 	validate(lexiValidation.createConversation),
 	catchAsync(lexiController.createConversation)
 );
 
 router.get(
 	'/conversations',
-	authenticate('lexi:read'),
+	authenticate(),
 	validate(lexiValidation.getUserConversations),
 	catchAsync(lexiController.getUserConversations)
 );
 
 router.get(
 	'/conversations/:conversationId',
-	authenticate('lexi:read'),
+	authenticate(),
 	validate(lexiValidation.getConversation),
 	catchAsync(lexiController.getConversation)
 );
@@ -39,30 +39,20 @@ router.post(
 
 router.post(
 	'/explain',
-	authenticate('lexi:create'),
+	authenticate(),
 	validate(lexiValidation.explainLegalJargon),
 	catchAsync(lexiController.explainLegalJargon)
 );
 
-router.post(
-	'/analyze',
-	authenticate('lexi:create'),
-	validate(lexiValidation.analyzeRisks),
-	catchAsync(lexiController.analyzeRisks)
-);
+router.post('/analyze', authenticate(), validate(lexiValidation.analyzeRisks), catchAsync(lexiController.analyzeRisks));
 
 router.post(
 	'/suggest-clauses',
-	authenticate('lexi:create'),
+	authenticate(),
 	validate(lexiValidation.suggestClauses),
 	catchAsync(lexiController.suggestClauses)
 );
 
-router.post(
-	'/adjust-tone',
-	authenticate('lexi:create'),
-	validate(lexiValidation.adjustTone),
-	catchAsync(lexiController.adjustTone)
-);
+router.post('/adjust-tone', authenticate(), validate(lexiValidation.adjustTone), catchAsync(lexiController.adjustTone));
 
 export default router;

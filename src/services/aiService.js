@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 export async function generateContractSections(contractType, parties) {
 	const prompt = `Generate a comprehensive ${contractType} contract with the following parties:
-		${parties.map(p => `${p.name} (${p.role})`).join(', ')}
+		${parties.map((p) => `${p.name} (${p.role})`).join(', ')}
 		
 		Please provide the contract in sections with titles and content.`;
 
@@ -79,9 +79,9 @@ function parseContractSections(content) {
 	return sections.map((section, index) => {
 		const [title, ...contentLines] = section.split('\n');
 		return {
-			title: title.replace(/^[#\d\.\s]+/, '').trim(),
+			title: title.replace(/^[#\d.\s]+/, '').trim(),
 			content: contentLines.join('\n').trim(),
 			order: index + 1
 		};
 	});
-} 
+}

@@ -32,6 +32,7 @@ export const notFound = (req, res, next) => {
 	return next(new APIError(httpStatus[httpStatus.NOT_FOUND], httpStatus.NOT_FOUND));
 };
 
+// eslint-disable-next-line no-unused-vars
 export const handler = (err, req, res, next) => {
 	let { status, message } = err;
 	if (config.NODE_ENV === 'production' && !err.isOperational) {
