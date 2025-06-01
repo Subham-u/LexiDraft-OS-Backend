@@ -204,13 +204,13 @@ Please generate a complete, legally sound contract that follows this structure a
 	parseContractClauses(aiResponse) {
 		// Split the response into sections based on headers
 		const sections = aiResponse.split(/\n(?=[A-Z][A-Za-z\s]+:)/);
-
+		
 		return sections.map((section, index) => {
 			const [title, ...contentParts] = section.split('\n');
 			return {
 				title: title.replace(':', '').trim(),
 				content: contentParts.join('\n').trim(),
-				order: index + 1
+				order: index + 1  // Automatically assign order based on array index
 			};
 		});
 	}

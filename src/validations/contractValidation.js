@@ -49,8 +49,7 @@ const createContract = {
 							.items(
 								Joi.object({
 									title: Joi.string().required(),
-									content: Joi.string().required(),
-									order: Joi.number().required()
+									content: Joi.string().required()
 								})
 							)
 							.required(),
@@ -205,8 +204,7 @@ const generateAIContract = {
 							.items(
 								Joi.object({
 									title: Joi.string().required(),
-									content: Joi.string().required(),
-									order: Joi.number().required()
+									content: Joi.string().required()
 								})
 							)
 							.required(),
