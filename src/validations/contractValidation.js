@@ -160,7 +160,7 @@ const suggestClause = {
 const generateAIContract = {
 	body: Joi.object().keys({
 		title: Joi.string().min(3).max(200).required(),
-		type: Joi.string().valid('service', 'employment', 'nda', 'partnership', 'other').required(),
+		type: Joi.string().required(),
 		description: Joi.string().min(10).max(2000).required(),
 		parties: Joi.string()
 			.custom((value, helpers) => {
