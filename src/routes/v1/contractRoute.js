@@ -9,6 +9,12 @@ const router = Router();
 
 // Contract CRUD operations
 router.post('/', authenticate(), validate(contractValidation.createContract), catchAsync(contractController.createContract));
+router.post(
+	'/generate',
+	authenticate(),
+	validate(contractValidation.generateAIContract),
+	catchAsync(contractController.generateAIContract)
+);
 router.get('/:contractId', authenticate(), validate(contractValidation.getContract), catchAsync(contractController.getContract));
 router.get('/', authenticate(), validate(contractValidation.getUserContracts), catchAsync(contractController.getUserContracts));
 router.put(

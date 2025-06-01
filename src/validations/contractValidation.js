@@ -3,24 +3,82 @@ import { mongoId } from './customValidation';
 
 const createContract = {
 	body: Joi.object().keys({
-		title: Joi.string().required(),
-		type: Joi.string().required(),
-		parties: Joi.array()
-			.items(
-				Joi.object().keys({
-					name: Joi.string().required(),
-					role: Joi.string().required()
-				})
-			)
+		title: Joi.string().min(3).max(200).required(),
+		type: Joi.string().valid('service', 'employment', 'nda', 'partnership', 'other').required(),
+		description: Joi.string().min(10).max(2000).required(),
+		parties: Joi.string()
+			.custom((value, helpers) => {
+				try {
+					const parsed = JSON.parse(value);
+					if (!Array.isArray(parsed)) {
+						return helpers.error('any.invalid');
+					}
+					// Validate each party object structure
+					const partySchema = Joi.object({
+						name: Joi.string().required(),
+						role: Joi.string().required(),
+						email: Joi.string().email().required(),
+						aadhaar: Joi.string()
+							.pattern(/^\d{12}$/)
+							.required(),
+						dsc: Joi.object({
+							serialNumber: Joi.string().required(),
+							validFrom: Joi.date().iso().required(),
+							validTo: Joi.date().iso().required()
+						}).required()
+					});
+					const { error } = Joi.array().items(partySchema).validate(parsed);
+					if (error) {
+						return helpers.error('any.invalid');
+					}
+					return value;
+				} catch (e) {
+					return helpers.error('any.invalid');
+				}
+			})
 			.required(),
-		sections: Joi.array()
-			.items(
-				Joi.object().keys({
-					title: Joi.string().required(),
-					content: Joi.string().required(),
-					order: Joi.number().required()
-				})
-			)
+		jurisdiction: Joi.string().min(2).max(100).required(),
+		startDate: Joi.date().iso().required(),
+		endDate: Joi.date().iso().min(Joi.ref('startDate')).required(),
+		content: Joi.string()
+			.custom((value, helpers) => {
+				try {
+					const parsed = JSON.parse(value);
+					const contentSchema = Joi.object({
+						clauses: Joi.array()
+							.items(
+								Joi.object({
+									title: Joi.string().required(),
+									content: Joi.string().required(),
+									order: Joi.number().required()
+								})
+							)
+							.required(),
+						appearance: Joi.object({
+							font: Joi.string(),
+							spacing: Joi.number(),
+							margins: Joi.object()
+						}).required(),
+						aiResponses: Joi.array()
+							.items(
+								Joi.object({
+									query: Joi.string().required(),
+									response: Joi.string().required(),
+									timestamp: Joi.date().iso().required()
+								})
+							)
+							.required(),
+						conversationSummary: Joi.string().required()
+					});
+					const { error } = contentSchema.validate(parsed);
+					if (error) {
+						return helpers.error('any.invalid');
+					}
+					return value;
+				} catch (e) {
+					return helpers.error('any.invalid');
+				}
+			})
 			.required()
 	})
 };
@@ -100,6 +158,86 @@ const suggestClause = {
 	})
 };
 
+const generateAIContract = {
+	body: Joi.object().keys({
+		title: Joi.string().min(3).max(200).required(),
+		type: Joi.string().valid('service', 'employment', 'nda', 'partnership', 'other').required(),
+		description: Joi.string().min(10).max(2000).required(),
+		parties: Joi.string()
+			.custom((value, helpers) => {
+				try {
+					const parsed = JSON.parse(value);
+					if (!Array.isArray(parsed)) {
+						return helpers.error('any.invalid');
+					}
+					const partySchema = Joi.object({
+						name: Joi.string().required(),
+						role: Joi.string().required(),
+						email: Joi.string().email().required(),
+						aadhaar: Joi.string()
+							.pattern(/^\d{12}$/)
+							.required(),
+						dsc: Joi.object({
+							serialNumber: Joi.string().required(),
+							validFrom: Joi.date().iso().required(),
+							validTo: Joi.date().iso().required()
+						}).required()
+					});
+					const { error } = Joi.array().items(partySchema).validate(parsed);
+					if (error) {
+						return helpers.error('any.invalid');
+					}
+					return value;
+				} catch (e) {
+					return helpers.error('any.invalid');
+				}
+			})
+			.required(),
+		jurisdiction: Joi.string().min(2).max(100).required(),
+		startDate: Joi.date().iso().required(),
+		endDate: Joi.date().iso().min(Joi.ref('startDate')).required(),
+		content: Joi.string()
+			.custom((value, helpers) => {
+				try {
+					const parsed = JSON.parse(value);
+					const contentSchema = Joi.object({
+						clauses: Joi.array()
+							.items(
+								Joi.object({
+									title: Joi.string().required(),
+									content: Joi.string().required(),
+									order: Joi.number().required()
+								})
+							)
+							.required(),
+						appearance: Joi.object({
+							font: Joi.string(),
+							spacing: Joi.number(),
+							logo: Joi.string(),
+							margins: Joi.object()
+						}).required(),
+						conversationSummary: Joi.string().required()
+					});
+					const { error } = contentSchema.validate(parsed);
+					if (error) {
+						return helpers.error('any.invalid');
+					}
+					return value;
+				} catch (e) {
+					return helpers.error('any.invalid');
+				}
+			})
+			.required(),
+		aiPreferences: Joi.object({
+			tone: Joi.string().valid('formal', 'semi-formal', 'casual').default('formal'),
+			language: Joi.string().default('en'),
+			includeDefinitions: Joi.boolean().default(true),
+			includeJurisdiction: Joi.boolean().default(true),
+			includeDisputeResolution: Joi.boolean().default(true)
+		}).default()
+	})
+};
+
 export default {
 	createContract,
 	getContract,
@@ -108,5 +246,6 @@ export default {
 	deleteContract,
 	generateSections,
 	rewriteSection,
-	suggestClause
+	suggestClause,
+	generateAIContract
 };
