@@ -181,7 +181,7 @@ const generateAIContract = {
 							serialNumber: Joi.string().required(),
 							validFrom: Joi.date().iso().required(),
 							validTo: Joi.date().iso().required()
-						}).required()
+						})
 					});
 					const { error } = Joi.array().items(partySchema).validate(parsed);
 					if (error) {

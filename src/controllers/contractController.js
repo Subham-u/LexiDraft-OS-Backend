@@ -2,7 +2,13 @@ import contractService from '~/services/contractService';
 import catchAsync from '~/utils/catchAsync';
 import httpStatus from 'http-status';
 import { OpenAI } from 'openai';
-import { Contract } from '~/models/contract';
+// import Contract from '~/models/contract';
+import config from '~/config/config';
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+	apiKey: config.openai.apiKey
+});
 
 class ContractController {
 	async createContract(req, res) {
@@ -101,18 +107,19 @@ class ContractController {
 		});
 
 		// Create the contract with AI-generated content
-		const contract = await Contract.create({
-			title,
-			type,
-			description,
-			parties: parsedParties,
-			jurisdiction,
-			startDate,
-			endDate,
-			content: JSON.stringify(contractContent),
-			createdBy: req.user.id,
-			status: 'draft'
-		});
+		const contract = await contractService.createContract(
+			{
+				title,
+				type,
+				description,
+				parties: parsedParties,
+				jurisdiction,
+				startDate,
+				endDate,
+				content: JSON.stringify(contractContent)
+			},
+			req.user.id
+		);
 
 		res.status(httpStatus.CREATED).send(contract);
 	});
@@ -149,7 +156,7 @@ ${aiPreferences.includeDisputeResolution ? '- Dispute Resolution: Include arbitr
 Please generate a complete, legally sound contract that follows this structure and includes all necessary clauses and sections.`;
 
 		// Call OpenAI API to generate the contract content
-		const response = await OpenAI.chat.completions.create({
+		const response = await openai.chat.completions.create({
 			model: 'gpt-4',
 			messages: [
 				{

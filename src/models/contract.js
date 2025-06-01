@@ -12,6 +12,11 @@ const contractSchema = new mongoose.Schema(
 			required: true,
 			trim: true
 		},
+		description: {
+			type: String,
+			required: true,
+			trim: true
+		},
 		parties: [
 			{
 				name: {
@@ -21,25 +26,48 @@ const contractSchema = new mongoose.Schema(
 				role: {
 					type: String,
 					required: true
-				}
-			}
-		],
-		sections: [
-			{
-				title: {
+				},
+				email: {
 					type: String,
 					required: true
 				},
-				content: {
+				aadhaar: {
 					type: String,
 					required: true
 				},
-				order: {
-					type: Number,
-					required: true
+				dsc: {
+					serialNumber: {
+						type: String,
+						required: true
+					},
+					validFrom: {
+						type: Date,
+						required: true
+					},
+					validTo: {
+						type: Date,
+						required: true
+					}
 				}
 			}
 		],
+		jurisdiction: {
+			type: String,
+			required: true,
+			trim: true
+		},
+		startDate: {
+			type: Date,
+			required: true
+		},
+		endDate: {
+			type: Date,
+			required: true
+		},
+		content: {
+			type: String,
+			required: true
+		},
 		status: {
 			type: String,
 			enum: ['draft', 'review', 'final'],
