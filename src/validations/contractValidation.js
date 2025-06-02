@@ -276,6 +276,18 @@ const accessSharedContract = {
 	})
 };
 
+const analyzeContract = {
+	params: Joi.object().keys({
+		contractId: Joi.string().custom(mongoId).required()
+	}),
+	body: Joi.object().keys({
+		analysisType: Joi.string().valid('risk', 'compliance', 'terms', 'all').default('all'),
+		jurisdiction: Joi.string().optional(),
+		industry: Joi.string().optional(),
+		additionalContext: Joi.string().optional()
+	})
+};
+
 export default {
 	createContract,
 	getContract,
@@ -288,5 +300,6 @@ export default {
 	generateAIContract,
 	updateGeneratedContract,
 	generateShareableLink,
-	accessSharedContract
+	accessSharedContract,
+	analyzeContract
 };

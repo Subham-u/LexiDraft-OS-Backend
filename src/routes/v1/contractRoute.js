@@ -72,4 +72,12 @@ router.get(
 	catchAsync(contractController.accessSharedContract)
 );
 
+// Contract analysis route
+router.post(
+	'/:contractId/analyze',
+	authenticate(),
+	validate(contractValidation.analyzeContract),
+	catchAsync(contractController.analyzeContract)
+);
+
 export default router;

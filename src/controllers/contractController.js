@@ -7,6 +7,7 @@ import config from '~/config/config';
 import SharedContract from '~/models/sharedContract';
 import emailService from '~/services/emailService';
 import logger from '~/config/logger';
+import contractAnalysisService from '~/services/contractAnalysisService';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -302,9 +303,7 @@ Please generate a complete, legally sound contract that follows this structure a
 
 		// Send notifications to allowed emails
 		if (allowedEmails && allowedEmails.length > 0) {
-			await Promise.all(
-				allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email))
-			);
+			await Promise.all(allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email)));
 		}
 
 		// Generate shareable URL
@@ -367,6 +366,33 @@ Please generate a complete, legally sound contract that follows this structure a
 				contract,
 				accessType: sharedContract.accessType,
 				expiresAt: sharedContract.expiresAt
+			}
+		});
+	});
+
+	analyzeContract = catchAsync(async (req, res) => {
+		const { contractId } = req.params;
+		const { analysisType, jurisdiction, industry, additionalContext } = req.body;
+
+		// Get contract details
+		const contract = await contractService.getContract(contractId);
+		if (!contract) {
+			throw new Error('Contract not found');
+		}
+
+		// Perform AI analysis
+		const analysis = await contractAnalysisService.analyzeContract(contract, {
+			analysisType,
+			jurisdiction,
+			industry,
+			additionalContext
+		});
+
+		res.status(httpStatus.OK).send({
+			success: true,
+			data: {
+				contractId,
+				analysis
 			}
 		});
 	});

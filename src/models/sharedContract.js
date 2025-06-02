@@ -28,11 +28,13 @@ const sharedContractSchema = new mongoose.Schema(
 			type: Date,
 			required: true
 		},
-		allowedEmails: [{
-			type: String,
-			trim: true,
-			lowercase: true
-		}],
+		allowedEmails: [
+			{
+				type: String,
+				trim: true,
+				lowercase: true
+			}
+		],
 		accessCount: {
 			type: Number,
 			default: 0
@@ -51,17 +53,17 @@ const sharedContractSchema = new mongoose.Schema(
 );
 
 // Generate a secure random token
-sharedContractSchema.statics.generateToken = function() {
+sharedContractSchema.statics.generateToken = function () {
 	return crypto.randomBytes(32).toString('hex');
 };
 
 // Check if the shared link is still valid
-sharedContractSchema.methods.isValid = function() {
+sharedContractSchema.methods.isValid = function () {
 	return this.isActive && new Date() < this.expiresAt;
 };
 
 // Check if email is allowed to access
-sharedContractSchema.methods.isEmailAllowed = function(email) {
+sharedContractSchema.methods.isEmailAllowed = function (email) {
 	if (!this.allowedEmails || this.allowedEmails.length === 0) {
 		return true; // No email restrictions
 	}
@@ -69,7 +71,7 @@ sharedContractSchema.methods.isEmailAllowed = function(email) {
 };
 
 // Increment access count and update last accessed timestamp
-sharedContractSchema.methods.recordAccess = function() {
+sharedContractSchema.methods.recordAccess = function () {
 	this.accessCount += 1;
 	this.lastAccessedAt = new Date();
 	return this.save();
@@ -77,4 +79,4 @@ sharedContractSchema.methods.recordAccess = function() {
 
 const SharedContract = mongoose.model('SharedContract', sharedContractSchema);
 
-export default SharedContract; 
+export default SharedContract;
