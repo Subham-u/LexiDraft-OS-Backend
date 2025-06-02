@@ -204,16 +204,69 @@ Please generate a complete, legally sound contract that follows this structure a
 	parseContractClauses(aiResponse) {
 		// Split the response into sections based on headers
 		const sections = aiResponse.split(/\n(?=[A-Z][A-Za-z\s]+:)/);
-		
+
 		return sections.map((section, index) => {
 			const [title, ...contentParts] = section.split('\n');
 			return {
 				title: title.replace(':', '').trim(),
 				content: contentParts.join('\n').trim(),
-				order: index + 1  // Automatically assign order based on array index
+				order: index + 1 // Automatically assign order based on array index
 			};
 		});
 	}
+
+	updateGeneratedContract = catchAsync(async (req, res) => {
+		const { contractId } = req.params;
+		const { title, type, description, parties, jurisdiction, startDate, endDate, content, aiPreferences } = req.body;
+
+		// Parse the JSON stringified parties and content
+		const parsedParties = parties ? JSON.parse(parties) : undefined;
+		const parsedContent = content ? JSON.parse(content) : undefined;
+
+		// Get the existing contract
+		const existingContract = await contractService.getContract(contractId);
+		if (!existingContract) {
+			throw new Error('Contract not found');
+		}
+
+		// Generate new contract content using AI if content is provided
+		let contractContent = existingContract.content;
+		if (content || aiPreferences) {
+			contractContent = await this.generateContractContent({
+				title: title || existingContract.title,
+				type: type || existingContract.type,
+				description: description || existingContract.description,
+				parties: parsedParties || existingContract.parties,
+				jurisdiction: jurisdiction || existingContract.jurisdiction,
+				startDate: startDate || existingContract.startDate,
+				endDate: endDate || existingContract.endDate,
+				content: parsedContent || JSON.parse(existingContract.content),
+				aiPreferences: aiPreferences || {}
+			});
+		}
+
+		// Update the contract
+		const updatedContract = await contractService.updateContract(
+			contractId,
+			{
+				...(title && { title }),
+				...(type && { type }),
+				...(description && { description }),
+				...(parsedParties && { parties: parsedParties }),
+				...(jurisdiction && { jurisdiction }),
+				...(startDate && { startDate }),
+				...(endDate && { endDate }),
+				...(contractContent && { content: JSON.stringify(contractContent) })
+			},
+			req.user.id
+		);
+
+		res.status(httpStatus.OK).send({
+			success: true,
+			message: 'Contract updated successfully',
+			data: updatedContract
+		});
+	});
 }
 
 export default new ContractController();

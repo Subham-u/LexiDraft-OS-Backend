@@ -15,14 +15,22 @@ router.post(
 	validate(contractValidation.generateAIContract),
 	catchAsync(contractController.generateAIContract)
 );
-router.get('/:contractId', authenticate(), validate(contractValidation.getContract), catchAsync(contractController.getContract));
-router.get('/', authenticate(), validate(contractValidation.getUserContracts), catchAsync(contractController.getUserContracts));
+
 router.put(
 	'/:contractId',
 	authenticate(),
-	validate(contractValidation.updateContract),
-	catchAsync(contractController.updateContract)
+	validate(contractValidation.updateGeneratedContract),
+	catchAsync(contractController.updateGeneratedContract)
 );
+
+router.get('/:contractId', authenticate(), validate(contractValidation.getContract), catchAsync(contractController.getContract));
+router.get('/', authenticate(), validate(contractValidation.getUserContracts), catchAsync(contractController.getUserContracts));
+// router.put(
+// 	'/:contractId',
+// 	authenticate(),
+// 	validate(contractValidation.updateContract),
+// 	catchAsync(contractController.updateContract)
+// );
 router.delete(
 	'/:contractId',
 	authenticate(),

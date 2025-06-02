@@ -236,6 +236,29 @@ const generateAIContract = {
 	})
 };
 
+const updateGeneratedContract = {
+	params: Joi.object().keys({
+		contractId: Joi.string().custom(mongoId).required()
+	}),
+	body: Joi.object().keys({
+		title: Joi.string(),
+		type: Joi.string(),
+		description: Joi.string(),
+		parties: Joi.string(), // JSON stringified parties
+		jurisdiction: Joi.string(),
+		startDate: Joi.date(),
+		endDate: Joi.date().min(Joi.ref('startDate')),
+		content: Joi.string(), // JSON stringified content
+		aiPreferences: Joi.object().keys({
+			tone: Joi.string().valid('formal', 'casual', 'technical'),
+			language: Joi.string(),
+			includeDefinitions: Joi.boolean(),
+			includeJurisdiction: Joi.boolean(),
+			includeDisputeResolution: Joi.boolean()
+		})
+	})
+};
+
 export default {
 	createContract,
 	getContract,
@@ -245,5 +268,6 @@ export default {
 	generateSections,
 	rewriteSection,
 	suggestClause,
-	generateAIContract
+	generateAIContract,
+	updateGeneratedContract
 };
