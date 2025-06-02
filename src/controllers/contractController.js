@@ -4,6 +4,9 @@ import httpStatus from 'http-status';
 import { OpenAI } from 'openai';
 // import Contract from '~/models/contract';
 import config from '~/config/config';
+import SharedContract from '~/models/sharedContract';
+import emailService from '~/services/emailService';
+import logger from '~/config/logger';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -265,6 +268,106 @@ Please generate a complete, legally sound contract that follows this structure a
 			success: true,
 			message: 'Contract updated successfully',
 			data: updatedContract
+		});
+	});
+
+	generateShareableLink = catchAsync(async (req, res) => {
+		const { contractId } = req.params;
+		const { expiresIn, accessType, allowedEmails } = req.body;
+
+		// Verify contract exists and user has access
+		const contract = await contractService.getContract(contractId);
+		if (!contract) {
+			throw new Error('Contract not found');
+		}
+
+		// Calculate expiration date
+		const expiresAt = new Date();
+		expiresAt.setDate(expiresAt.getDate() + expiresIn);
+
+		// Generate share token
+		const shareToken = SharedContract.generateToken();
+
+		// Create shared contract record
+		const sharedContract = new SharedContract({
+			contractId,
+			shareToken,
+			createdBy: req.user.id,
+			accessType,
+			expiresAt,
+			allowedEmails
+		});
+
+		await sharedContract.save();
+
+		// Send notifications to allowed emails
+		if (allowedEmails && allowedEmails.length > 0) {
+			await Promise.all(
+				allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email))
+			);
+		}
+
+		// Generate shareable URL
+		const shareableUrl = `${config.clientUrl}/contracts/shared/${shareToken}`;
+
+		res.status(httpStatus.CREATED).send({
+			success: true,
+			data: {
+				shareableUrl,
+				expiresAt,
+				accessType,
+				allowedEmails
+			}
+		});
+	});
+
+	accessSharedContract = catchAsync(async (req, res) => {
+		const { shareToken } = req.params;
+		const { email } = req.query; // Optional email for access control
+
+		// Find shared contract
+		const sharedContract = await SharedContract.findOne({ shareToken });
+		if (!sharedContract) {
+			throw new Error('Invalid or expired share link');
+		}
+
+		// Check if link is still valid
+		if (!sharedContract.isValid()) {
+			throw new Error('Share link has expired');
+		}
+
+		// Check email access if email is provided
+		if (email && !sharedContract.isEmailAllowed(email)) {
+			throw new Error('Access denied for this email');
+		}
+
+		// Get contract details
+		const contract = await contractService.getContract(sharedContract.contractId);
+		if (!contract) {
+			throw new Error('Contract not found');
+		}
+
+		// Record access
+		await sharedContract.recordAccess();
+
+		// Send access notification if email is provided
+		if (email) {
+			try {
+				await emailService.sendContractAccessNotification(sharedContract, email);
+			} catch (error) {
+				// Log error but don't fail the request
+				logger.error('Failed to send access notification:', error);
+			}
+		}
+
+		// Return contract with access type
+		res.status(httpStatus.OK).send({
+			success: true,
+			data: {
+				contract,
+				accessType: sharedContract.accessType,
+				expiresAt: sharedContract.expiresAt
+			}
 		});
 	});
 }

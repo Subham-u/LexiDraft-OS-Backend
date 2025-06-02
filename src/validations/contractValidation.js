@@ -259,6 +259,23 @@ const updateGeneratedContract = {
 	})
 };
 
+const generateShareableLink = {
+	params: Joi.object().keys({
+		contractId: Joi.string().custom(mongoId).required()
+	}),
+	body: Joi.object().keys({
+		expiresIn: Joi.number().integer().min(1).max(30).default(7), // Expires in days, max 30 days
+		accessType: Joi.string().valid('view', 'comment', 'edit').default('view'),
+		allowedEmails: Joi.array().items(Joi.string().email()).max(10) // Optional list of allowed email addresses
+	})
+};
+
+const accessSharedContract = {
+	params: Joi.object().keys({
+		shareToken: Joi.string().required()
+	})
+};
+
 export default {
 	createContract,
 	getContract,
@@ -269,5 +286,7 @@ export default {
 	rewriteSection,
 	suggestClause,
 	generateAIContract,
-	updateGeneratedContract
+	updateGeneratedContract,
+	generateShareableLink,
+	accessSharedContract
 };

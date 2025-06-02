@@ -58,4 +58,18 @@ router.post(
 	catchAsync(contractController.suggestClause)
 );
 
+// Shareable contract routes
+router.post(
+	'/:contractId/share',
+	authenticate(),
+	validate(contractValidation.generateShareableLink),
+	catchAsync(contractController.generateShareableLink)
+);
+
+router.get(
+	'/shared/:shareToken',
+	validate(contractValidation.accessSharedContract),
+	catchAsync(contractController.accessSharedContract)
+);
+
 export default router;

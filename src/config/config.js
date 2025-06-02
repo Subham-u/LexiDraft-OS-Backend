@@ -98,5 +98,18 @@ export default {
 		apiKey: env.AADHAAR_API_KEY,
 		apiSecret: env.AADHAAR_API_SECRET,
 		apiUrl: env.AADHAAR_API_URL
+	},
+
+	email: {
+		smtp: {
+			host: env.SMTP_HOST,
+			port: env.SMTP_PORT,
+			secure: env.SMTP_SECURE === 'true',
+			auth: {
+				user: env.SMTP_USER,
+				pass: env.SMTP_PASS
+			}
+		},
+		from: env.EMAIL_FROM || 'noreply@lexidraft.com'
 	}
 };
