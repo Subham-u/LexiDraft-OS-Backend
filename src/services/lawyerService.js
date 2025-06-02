@@ -3,6 +3,9 @@ import Consultation from '~/models/Consultation';
 import { ApiError } from '~/utils/apiError';
 import httpStatus from 'http-status';
 import meetingService from '~/services/meetingService';
+import Contract from '~/models/contract';
+import Booking from '~/models/booking';
+import Invoice from '~/models/invoice';
 
 class LawyerService {
 	async createLawyerProfile(userId, lawyerData) {
@@ -234,6 +237,121 @@ class LawyerService {
 			.populate('lawyer', 'user expertise')
 			.populate('lawyer.user', 'name email')
 			.sort({ scheduledAt: -1 });
+	}
+
+	async getDashboardStats(lawyerId) {
+		const lawyer = await Lawyer.findOne({ userId: lawyerId });
+		if (!lawyer) {
+			throw new Error('Lawyer not found');
+		}
+
+		// Get active bookings
+		const activeBookings = await Booking.find({
+			lawyerId: lawyer._id,
+			status: { $in: ['scheduled', 'in-progress'] }
+		}).populate('clientId', 'name email');
+
+		// Get pending contracts
+		const pendingContracts = await Contract.find({
+			lawyerId: lawyer._id,
+			status: 'review'
+		}).populate('userId', 'name email');
+
+		// Get recent earnings
+		const recentEarnings = await Invoice.find({
+			lawyerId: lawyer._id,
+			status: 'settled',
+			createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
+		}).sort({ createdAt: -1 });
+
+		return {
+			earnings: lawyer.earnings,
+			activeBookings,
+			pendingContracts,
+			recentEarnings,
+			rating: lawyer.rating,
+			totalReviews: lawyer.totalReviews
+		};
+	}
+
+	async updateAvailability(lawyerId, availability) {
+		const lawyer = await Lawyer.findOne({ userId: lawyerId });
+		if (!lawyer) {
+			throw new Error('Lawyer not found');
+		}
+
+		lawyer.availability = availability;
+		await lawyer.save();
+		return lawyer;
+	}
+
+	async getSharedContracts(lawyerId, query) {
+		const { page = 1, limit = 10, status } = query;
+		const skip = (page - 1) * limit;
+
+		const filter = { lawyerId };
+		if (status) {
+			filter.status = status;
+		}
+
+		const contracts = await Contract.find(filter)
+			.sort({ createdAt: -1 })
+			.skip(skip)
+			.limit(limit)
+			.populate('userId', 'name email');
+
+		const total = await Contract.countDocuments(filter);
+
+		return {
+			contracts,
+			pagination: {
+				total,
+				page: Number(page),
+				limit: Number(limit),
+				pages: Math.ceil(total / limit)
+			}
+		};
+	}
+
+	async getEarningsReport(lawyerId, startDate, endDate) {
+		const lawyer = await Lawyer.findOne({ userId: lawyerId });
+		if (!lawyer) {
+			throw new Error('Lawyer not found');
+		}
+
+		const invoices = await Invoice.find({
+			lawyerId: lawyer._id,
+			createdAt: {
+				$gte: new Date(startDate),
+				$lte: new Date(endDate)
+			}
+		}).sort({ createdAt: -1 });
+
+		const totalEarnings = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
+		const pendingAmount = invoices
+			.filter(invoice => invoice.status === 'pending')
+			.reduce((sum, invoice) => sum + invoice.amount, 0);
+		const settledAmount = invoices
+			.filter(invoice => invoice.status === 'settled')
+			.reduce((sum, invoice) => sum + invoice.amount, 0);
+
+		return {
+			totalEarnings,
+			pendingAmount,
+			settledAmount,
+			invoices
+		};
+	}
+
+	async updateProfile(lawyerId, updateData) {
+		const lawyer = await Lawyer.findOne({ userId: lawyerId });
+		if (!lawyer) {
+			throw new Error('Lawyer not found');
+		}
+
+		Object.assign(lawyer, updateData);
+		await lawyer.save();
+		return lawyer;
 	}
 }
 

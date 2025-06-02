@@ -152,11 +152,60 @@ const addFeedback = {
 	})
 };
 
+const updateAvailability = {
+	body: Joi.object().keys({
+		availability: Joi.array()
+			.items(
+				Joi.object().keys({
+					day: Joi.string().valid('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday').required(),
+					slots: Joi.array()
+						.items(
+							Joi.object().keys({
+								startTime: Joi.string().required(),
+								endTime: Joi.string().required(),
+								isAvailable: Joi.boolean().default(true)
+							})
+						)
+						.required()
+				})
+			)
+			.required()
+	})
+};
+
+const getSharedContracts = {
+	query: Joi.object().keys({
+		page: Joi.number().integer().min(1),
+		limit: Joi.number().integer().min(1).max(100),
+		status: Joi.string().valid('draft', 'review', 'final')
+	})
+};
+
+const getEarningsReport = {
+	query: Joi.object().keys({
+		startDate: Joi.date().iso().required(),
+		endDate: Joi.date().iso().min(Joi.ref('startDate')).required()
+	})
+};
+
+const updateProfile = {
+	body: Joi.object().keys({
+		specialization: Joi.array().items(Joi.string()),
+		experience: Joi.number().min(0),
+		consultationFee: Joi.number().min(0),
+		status: Joi.string().valid('active', 'inactive', 'suspended')
+	})
+};
+
 export default {
 	createLawyer,
 	updateLawyer,
 	searchLawyers,
 	createConsultation,
 	updateConsultationStatus,
-	addFeedback
+	addFeedback,
+	updateAvailability,
+	getSharedContracts,
+	getEarningsReport,
+	updateProfile
 };

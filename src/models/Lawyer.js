@@ -1,143 +1,89 @@
 import mongoose from 'mongoose';
 import toJSON from './plugins/toJSONPlugin';
 
-const lawyerSchema = mongoose.Schema(
+const availabilitySchema = new mongoose.Schema({
+	day: {
+		type: String,
+		enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+		required: true
+	},
+	slots: [
+		{
+			startTime: {
+				type: String,
+				required: true
+			},
+			endTime: {
+				type: String,
+				required: true
+			},
+			isAvailable: {
+				type: Boolean,
+				default: true
+			}
+		}
+	]
+});
+
+const lawyerSchema = new mongoose.Schema(
 	{
-		user: {
-			type: mongoose.SchemaTypes.ObjectId,
+		userId: {
+			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
 			unique: true
 		},
-		barCouncilNumber: {
-			type: String,
-			required: true,
-			unique: true,
-			trim: true
-		},
-		stateOfPractice: {
-			type: String,
-			required: true,
-			trim: true
-		},
-		yearOfEnrollment: {
+		specialization: [
+			{
+				type: String,
+				required: true
+			}
+		],
+		experience: {
 			type: Number,
 			required: true
 		},
-		expertise: [
-			{
-				type: String,
-				required: true,
-				trim: true
-			}
-		],
-		bio: {
+		barCouncilNumber: {
 			type: String,
 			required: true,
-			trim: true
+			unique: true
 		},
-		education: [
-			{
-				degree: {
-					type: String,
-					required: true,
-					trim: true
-				},
-				institution: {
-					type: String,
-					required: true,
-					trim: true
-				},
-				year: {
-					type: Number,
-					required: true
-				}
-			}
-		],
-		experience: [
-			{
-				position: {
-					type: String,
-					required: true,
-					trim: true
-				},
-				organization: {
-					type: String,
-					required: true,
-					trim: true
-				},
-				from: {
-					type: Date,
-					required: true
-				},
-				to: {
-					type: Date
-				},
-				current: {
-					type: Boolean,
-					default: false
-				}
-			}
-		],
-		pricing: {
-			consultation: {
-				type: Number,
-				required: true,
-				min: 0
-			},
-			review: {
-				type: Number,
-				required: true,
-				min: 0
-			},
-			drafting: {
-				type: Number,
-				required: true,
-				min: 0
-			}
+		consultationFee: {
+			type: Number,
+			required: true
 		},
-		availability: [
-			{
-				day: {
-					type: String,
-					enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-					required: true
-				},
-				slots: [
-					{
-						start: {
-							type: String,
-							required: true
-						},
-						end: {
-							type: String,
-							required: true
-						}
-					}
-				]
-			}
-		],
+		availability: [availabilitySchema],
 		rating: {
-			average: {
+			type: Number,
+			default: 0
+		},
+		totalReviews: {
+			type: Number,
+			default: 0
+		},
+		earnings: {
+			total: {
 				type: Number,
-				default: 0,
-				min: 0,
-				max: 5
+				default: 0
 			},
-			count: {
+			pending: {
+				type: Number,
+				default: 0
+			},
+			settled: {
 				type: Number,
 				default: 0
 			}
 		},
-		isVerified: {
-			type: Boolean,
-			default: false
+		status: {
+			type: String,
+			enum: ['active', 'inactive', 'suspended'],
+			default: 'active'
 		},
 		documents: [
 			{
 				type: {
 					type: String,
-					enum: ['barCouncil', 'identity', 'education', 'other'],
 					required: true
 				},
 				url: {
@@ -149,17 +95,18 @@ const lawyerSchema = mongoose.Schema(
 					default: false
 				}
 			}
-		],
-		status: {
-			type: String,
-			enum: ['active', 'inactive', 'suspended'],
-			default: 'active'
-		}
+		]
 	},
 	{
 		timestamps: true
 	}
 );
+
+// Indexes for better query performance
+lawyerSchema.index({ userId: 1 });
+lawyerSchema.index({ specialization: 1 });
+lawyerSchema.index({ status: 1 });
+lawyerSchema.index({ barCouncilNumber: 1 });
 
 // Add plugins
 lawyerSchema.plugin(toJSON);

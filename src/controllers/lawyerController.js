@@ -57,6 +57,48 @@ const endConsultation = catchAsync(async (req, res) => {
 	res.send(consultation);
 });
 
+const getDashboardStats = catchAsync(async (req, res) => {
+	const stats = await lawyerService.getDashboardStats(req.user.id);
+	res.status(httpStatus.OK).send({
+		success: true,
+		data: stats
+	});
+});
+
+const updateAvailability = catchAsync(async (req, res) => {
+	const { availability } = req.body;
+	const lawyer = await lawyerService.updateAvailability(req.user.id, availability);
+	res.status(httpStatus.OK).send({
+		success: true,
+		data: lawyer
+	});
+});
+
+const getSharedContracts = catchAsync(async (req, res) => {
+	const contracts = await lawyerService.getSharedContracts(req.user.id, req.query);
+	res.status(httpStatus.OK).send({
+		success: true,
+		data: contracts
+	});
+});
+
+const getEarningsReport = catchAsync(async (req, res) => {
+	const { startDate, endDate } = req.query;
+	const report = await lawyerService.getEarningsReport(req.user.id, startDate, endDate);
+	res.status(httpStatus.OK).send({
+		success: true,
+		data: report
+	});
+});
+
+const updateProfile = catchAsync(async (req, res) => {
+	const lawyer = await lawyerService.updateProfile(req.user.id, req.body);
+	res.status(httpStatus.OK).send({
+		success: true,
+		data: lawyer
+	});
+});
+
 export default {
 	createLawyerProfile,
 	getLawyerProfile,
@@ -68,5 +110,10 @@ export default {
 	addFeedback,
 	getConsultationHistory,
 	joinConsultation,
-	endConsultation
+	endConsultation,
+	getDashboardStats,
+	updateAvailability,
+	getSharedContracts,
+	getEarningsReport,
+	updateProfile
 };

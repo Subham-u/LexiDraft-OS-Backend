@@ -44,4 +44,30 @@ router
 
 router.route('/consultations').get(authenticate(), catchAsync(lawyerController.getConsultationHistory));
 
+// Dashboard routes
+router.get('/dashboard/stats', authenticate(), catchAsync(lawyerController.getDashboardStats));
+
+router.get(
+	'/dashboard/contracts',
+	authenticate(),
+	validate(lawyerValidation.getSharedContracts),
+	catchAsync(lawyerController.getSharedContracts)
+);
+
+router.get(
+	'/dashboard/earnings',
+	authenticate(),
+	validate(lawyerValidation.getEarningsReport),
+	catchAsync(lawyerController.getEarningsReport)
+);
+
+router.patch(
+	'/dashboard/availability',
+	authenticate(),
+	validate(lawyerValidation.updateAvailability),
+	catchAsync(lawyerController.updateAvailability)
+);
+
+router.patch('/profile', authenticate(), validate(lawyerValidation.updateProfile), catchAsync(lawyerController.updateProfile));
+
 export default router;
