@@ -266,13 +266,39 @@ const generateShareableLink = {
 	body: Joi.object().keys({
 		expiresIn: Joi.number().integer().min(1).max(30).default(7), // Expires in days, max 30 days
 		accessType: Joi.string().valid('view', 'comment', 'edit').default('view'),
-		allowedEmails: Joi.array().items(Joi.string().email()).max(10) // Optional list of allowed email addresses
+		shareType: Joi.string().valid('public', 'restricted').required(),
+		allowedEmails: Joi.when('shareType', {
+			is: 'restricted',
+			then: Joi.array().items(Joi.string().email()).min(1).max(10).required(),
+			otherwise: Joi.array().items(Joi.string().email()).max(0)
+		})
 	})
 };
 
 const accessSharedContract = {
 	params: Joi.object().keys({
 		shareToken: Joi.string().required()
+	})
+};
+
+const requestContractAccess = {
+	params: Joi.object().keys({
+		shareToken: Joi.string().required()
+	}),
+	body: Joi.object().keys({
+		email: Joi.string().email().required(),
+		reason: Joi.string().max(500).optional()
+	})
+};
+
+const updateAccessRequest = {
+	params: Joi.object().keys({
+		shareToken: Joi.string().required(),
+		email: Joi.string().email().required()
+	}),
+	body: Joi.object().keys({
+		status: Joi.string().valid('approved', 'rejected').required(),
+		responseNote: Joi.string().max(500).optional()
 	})
 };
 
@@ -301,5 +327,7 @@ export default {
 	updateGeneratedContract,
 	generateShareableLink,
 	accessSharedContract,
+	requestContractAccess,
+	updateAccessRequest,
 	analyzeContract
 };

@@ -274,7 +274,7 @@ Please generate a complete, legally sound contract that follows this structure a
 
 	generateShareableLink = catchAsync(async (req, res) => {
 		const { contractId } = req.params;
-		const { expiresIn, accessType, allowedEmails } = req.body;
+		const { expiresIn, accessType, shareType, allowedEmails } = req.body;
 
 		// Verify contract exists and user has access
 		const contract = await contractService.getContract(contractId);
@@ -295,14 +295,15 @@ Please generate a complete, legally sound contract that follows this structure a
 			shareToken,
 			createdBy: req.user.id,
 			accessType,
+			shareType,
 			expiresAt,
-			allowedEmails
+			allowedEmails: shareType === 'restricted' ? allowedEmails : []
 		});
 
 		await sharedContract.save();
 
-		// Send notifications to allowed emails
-		if (allowedEmails && allowedEmails.length > 0) {
+		// Send notifications to allowed emails for restricted sharing
+		if (shareType === 'restricted' && allowedEmails && allowedEmails.length > 0) {
 			await Promise.all(allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email)));
 		}
 
@@ -315,14 +316,15 @@ Please generate a complete, legally sound contract that follows this structure a
 				shareableUrl,
 				expiresAt,
 				accessType,
-				allowedEmails
+				shareType,
+				allowedEmails: shareType === 'restricted' ? allowedEmails : []
 			}
 		});
 	});
 
 	accessSharedContract = catchAsync(async (req, res) => {
 		const { shareToken } = req.params;
-		const { email } = req.query; // Optional email for access control
+		const userEmail = req.user.email; // Get email from authenticated user
 
 		// Find shared contract
 		const sharedContract = await SharedContract.findOne({ shareToken });
@@ -335,9 +337,9 @@ Please generate a complete, legally sound contract that follows this structure a
 			throw new Error('Share link has expired');
 		}
 
-		// Check email access if email is provided
-		if (email && !sharedContract.isEmailAllowed(email)) {
-			throw new Error('Access denied for this email');
+		// Check email access
+		if (!sharedContract.isEmailAllowed(userEmail)) {
+			throw new Error('Access denied. Your email is not authorized to view this contract.');
 		}
 
 		// Get contract details
@@ -349,14 +351,11 @@ Please generate a complete, legally sound contract that follows this structure a
 		// Record access
 		await sharedContract.recordAccess();
 
-		// Send access notification if email is provided
-		if (email) {
-			try {
-				await emailService.sendContractAccessNotification(sharedContract, email);
-			} catch (error) {
-				// Log error but don't fail the request
-				logger.error('Failed to send access notification:', error);
-			}
+		// Send access notification
+		try {
+			await emailService.sendContractAccessNotification(sharedContract, userEmail);
+		} catch (error) {
+			logger.error('Failed to send access notification:', error);
 		}
 
 		// Return contract with access type
@@ -366,6 +365,89 @@ Please generate a complete, legally sound contract that follows this structure a
 				contract,
 				accessType: sharedContract.accessType,
 				expiresAt: sharedContract.expiresAt
+			}
+		});
+	});
+
+	requestContractAccess = catchAsync(async (req, res) => {
+		const { shareToken } = req.params;
+		const { email, reason } = req.body;
+
+		// Find shared contract
+		const sharedContract = await SharedContract.findOne({ shareToken });
+		if (!sharedContract) {
+			throw new Error('Invalid or expired share link');
+		}
+
+		// Check if link is still valid
+		if (!sharedContract.isValid()) {
+			throw new Error('Share link has expired');
+		}
+
+		// Check if email is already allowed
+		if (sharedContract.isEmailAllowed(email)) {
+			throw new Error('You already have access to this contract');
+		}
+
+		// Add access request
+		await sharedContract.addAccessRequest(email);
+
+		// Get contract details for notification
+		const contract = await contractService.getContract(sharedContract.contractId);
+		const creator = await contract.populate('userId');
+
+		// Send notification to contract creator
+		try {
+			await emailService.sendAccessRequestNotification(creator.userId.email, {
+				contractTitle: contract.title,
+				requestedBy: email,
+				reason,
+				shareToken
+			});
+		} catch (error) {
+			logger.error('Failed to send access request notification:', error);
+		}
+
+		res.status(httpStatus.OK).send({
+			success: true,
+			message: 'Access request submitted successfully',
+			data: {
+				status: 'pending',
+				requestedAt: new Date()
+			}
+		});
+	});
+
+	updateAccessRequest = catchAsync(async (req, res) => {
+		const { shareToken, email } = req.params;
+		const { status, responseNote } = req.body;
+
+		// Find shared contract
+		const sharedContract = await SharedContract.findOne({ shareToken });
+		if (!sharedContract) {
+			throw new Error('Invalid or expired share link');
+		}
+
+		// Update access request
+		await sharedContract.updateAccessRequest(email, status, responseNote);
+
+		// Send notification to requester
+		try {
+			await emailService.sendAccessRequestResponseNotification(email, {
+				status,
+				responseNote,
+				shareToken
+			});
+		} catch (error) {
+			logger.error('Failed to send access request response notification:', error);
+		}
+
+		res.status(httpStatus.OK).send({
+			success: true,
+			message: `Access request ${status} successfully`,
+			data: {
+				status,
+				respondedAt: new Date()
 			}
 		});
 	});

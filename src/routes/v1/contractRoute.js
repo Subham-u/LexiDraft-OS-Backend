@@ -68,8 +68,23 @@ router.post(
 
 router.get(
 	'/shared/:shareToken',
+	authenticate(),
 	validate(contractValidation.accessSharedContract),
 	catchAsync(contractController.accessSharedContract)
+);
+
+// Access request routes
+router.post(
+	'/shared/:shareToken/request',
+	validate(contractValidation.requestContractAccess),
+	catchAsync(contractController.requestContractAccess)
+);
+
+router.put(
+	'/shared/:shareToken/request/:email',
+	authenticate(),
+	validate(contractValidation.updateAccessRequest),
+	catchAsync(contractController.updateAccessRequest)
 );
 
 // Contract analysis route
