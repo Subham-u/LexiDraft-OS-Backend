@@ -271,7 +271,8 @@ const generateShareableLink = {
 			is: 'restricted',
 			then: Joi.array().items(Joi.string().email()).min(1).max(10).required(),
 			otherwise: Joi.array().items(Joi.string().email()).max(0)
-		})
+		}),
+		regenerate: Joi.boolean().default(false) // Option to generate new link
 	})
 };
 
@@ -314,6 +315,18 @@ const analyzeContract = {
 	})
 };
 
+const saveAsTemplate = {
+	params: Joi.object().keys({
+		contractId: Joi.string().custom(mongoId).required()
+	}),
+	body: Joi.object().keys({
+		templateName: Joi.string().min(3).max(100).required(),
+		description: Joi.string().max(500).optional(),
+		category: Joi.string().valid('service', 'employment', 'nda', 'partnership', 'other').required(),
+		isPublic: Joi.boolean().default(false)
+	})
+};
+
 export default {
 	createContract,
 	getContract,
@@ -329,5 +342,6 @@ export default {
 	accessSharedContract,
 	requestContractAccess,
 	updateAccessRequest,
-	analyzeContract
+	analyzeContract,
+	saveAsTemplate
 };

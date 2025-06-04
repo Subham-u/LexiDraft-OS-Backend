@@ -95,4 +95,12 @@ router.post(
 	catchAsync(contractController.analyzeContract)
 );
 
+// Contract template routes
+router.post(
+	'/:contractId/save-template',
+	authenticate(),
+	validate(contractValidation.saveAsTemplate),
+	catchAsync(contractController.saveAsTemplate)
+);
+
 export default router;

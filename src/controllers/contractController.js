@@ -274,7 +274,7 @@ Please generate a complete, legally sound contract that follows this structure a
 
 	generateShareableLink = catchAsync(async (req, res) => {
 		const { contractId } = req.params;
-		const { expiresIn, accessType, shareType, allowedEmails } = req.body;
+		const { expiresIn, accessType, shareType, allowedEmails, regenerate } = req.body;
 
 		// Verify contract exists and user has access
 		const contract = await contractService.getContract(contractId);
@@ -286,38 +286,70 @@ Please generate a complete, legally sound contract that follows this structure a
 		const expiresAt = new Date();
 		expiresAt.setDate(expiresAt.getDate() + expiresIn);
 
-		// Generate share token
-		const shareToken = SharedContract.generateToken();
-
-		// Create shared contract record
-		const sharedContract = new SharedContract({
+		// Check if user already has a shareable link for this contract
+		let sharedContract = await SharedContract.findOne({
 			contractId,
-			shareToken,
 			createdBy: req.user.id,
-			accessType,
-			shareType,
-			expiresAt,
-			allowedEmails: shareType === 'restricted' ? allowedEmails : []
+			isActive: true
 		});
 
-		await sharedContract.save();
+		if (sharedContract && !regenerate) {
+			// Update existing shareable link
+			sharedContract.accessType = accessType;
+			sharedContract.shareType = shareType;
+			sharedContract.expiresAt = expiresAt;
+			sharedContract.allowedEmails = shareType === 'restricted' ? allowedEmails : [];
+			await sharedContract.save();
 
-		// Send notifications to allowed emails for restricted sharing
-		if (shareType === 'restricted' && allowedEmails && allowedEmails.length > 0) {
-			await Promise.all(allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email)));
+			// Send notifications to newly added emails for restricted sharing
+			if (shareType === 'restricted' && allowedEmails && allowedEmails.length > 0) {
+				const newEmails = allowedEmails.filter((email) => !sharedContract.allowedEmails.includes(email));
+				if (newEmails.length > 0) {
+					await Promise.all(newEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email)));
+				}
+			}
+		} else {
+			// If there's an existing link and regenerate is true, deactivate it
+			if (sharedContract) {
+				sharedContract.isActive = false;
+				await sharedContract.save();
+			}
+
+			// Generate new share token
+			const shareToken = SharedContract.generateToken();
+
+			// Create new shared contract record
+			sharedContract = new SharedContract({
+				contractId,
+				shareToken,
+				createdBy: req.user.id,
+				accessType,
+				shareType,
+				expiresAt,
+				allowedEmails: shareType === 'restricted' ? allowedEmails : []
+			});
+
+			await sharedContract.save();
+
+			// Send notifications to allowed emails for restricted sharing
+			if (shareType === 'restricted' && allowedEmails && allowedEmails.length > 0) {
+				await Promise.all(allowedEmails.map((email) => emailService.sendContractShareNotification(sharedContract, email)));
+			}
 		}
 
 		// Generate shareable URL
-		const shareableUrl = `${config.clientUrl}/contracts/shared/${shareToken}`;
+		const shareableUrl = `${config.clientUrl}/contracts/shared/${sharedContract.shareToken}`;
 
-		res.status(httpStatus.CREATED).send({
+		res.status(httpStatus.OK).send({
 			success: true,
 			data: {
 				shareableUrl,
-				expiresAt,
-				accessType,
-				shareType,
-				allowedEmails: shareType === 'restricted' ? allowedEmails : []
+				expiresAt: sharedContract.expiresAt,
+				accessType: sharedContract.accessType,
+				shareType: sharedContract.shareType,
+				allowedEmails: sharedContract.allowedEmails,
+				isNew: !sharedContract.createdAt || new Date().getTime() - new Date(sharedContract.createdAt).getTime() < 1000, // Check if created within last second
+				isRegenerated: regenerate
 			}
 		});
 	});
@@ -476,6 +508,39 @@ Please generate a complete, legally sound contract that follows this structure a
 				contractId,
 				analysis
 			}
+		});
+	});
+
+	saveAsTemplate = catchAsync(async (req, res) => {
+		const { contractId } = req.params;
+		const { templateName, description, category, isPublic } = req.body;
+
+		// Get the original contract
+		const contract = await contractService.getContract(contractId);
+		if (!contract) {
+			throw new Error('Contract not found');
+		}
+
+		// Create a new contract template
+		const template = await contractService.createContract(
+			{
+				title: templateName,
+				type: category,
+				description: description || `Template based on ${contract.title}`,
+				parties: contract.parties,
+				jurisdiction: contract.jurisdiction,
+				content: contract.content,
+				isTemplate: true,
+				isPublic,
+				templateSource: contractId
+			},
+			req.user.id
+		);
+
+		res.status(httpStatus.CREATED).send({
+			success: true,
+			message: 'Contract saved as template successfully',
+			data: template
 		});
 	});
 }
