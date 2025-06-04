@@ -166,7 +166,7 @@ Please generate a complete, legally sound contract that follows this structure a
 				{
 					role: 'system',
 					content:
-						'You are a legal contract expert. Generate a complete, legally sound contract based on the provided details. Ensure the contract is well-structured, clear, and enforceable.'
+						'Please generate a complete, legally sound contract in well-written paragraphs, not bullet points or numbered lists. Use formal legal language and ensure each section is clearly separated with headings in bold and uppercase  followed by well-structured paragraphs.Maintain proper spacing between sections (one blank line) and indent the first line of each paragraph slightly (or simulate indentation with line breaks). The tone should be professional and legally accurate.Ensure the agreement reads like a real legal contract and can be directly used in professional settings without further formatting.Structure the contract similar to real-world legal agreement templates used in India. Use consistent terminology and format like a formal legal document'
 				},
 				{
 					role: 'user',

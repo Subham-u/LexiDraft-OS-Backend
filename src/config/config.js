@@ -106,8 +106,8 @@ export default {
 			port: env.SMTP_PORT,
 			secure: env.SMTP_SECURE === 'true',
 			auth: {
-				user: env.SMTP_USER,
-				pass: env.SMTP_PASS
+				user: env.SMTP_USERNAME,
+				pass: env.SMTP_PASSWORD
 			}
 		},
 		from: env.EMAIL_FROM || 'noreply@lexidraft.com'
